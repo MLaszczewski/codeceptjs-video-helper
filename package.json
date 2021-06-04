@@ -1,0 +1,26 @@
+{
+  "name": "codeceptjs-video-helper",
+  "version": "0.1.0",
+  "description": "CodeceptJS Helper for multi sesssion video recording",
+  "main": "index.js",
+  "scripts": {
+    "test": "NODE_ENV=test tape tests/*"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MLaszczewski/codeceptjs-video-helper.git"
+  },
+  "author": {
+    "email": "m8@em8.pl",
+    "name": "Michał Łaszczewski",
+    "url": "https://www.viamage.com/"
+  },
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MLaszczewski/codeceptjs-video-helper/issues"
+  },
+  "homepage": "https://github.com/MLaszczewski/codeceptjs-video-helper",
+  "dependencies": {
+    "@codeceptjs/helper": "^1.0.2"    
+  }
+}
