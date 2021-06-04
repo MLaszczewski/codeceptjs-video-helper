@@ -84,7 +84,7 @@ class VideoHelper extends Helper {
       `  </tractor>`
 
     const mlt = `<mlt>\n${producers}\n${multitrack}\n</mlt>`
-    console.log("MLT:\n"+mlt)
+    //console.log("MLT:\n"+mlt)
     await fs.promises.writeFile(path.resolve(videoDir, 'scenario.mlt'), mlt)
   }
 
