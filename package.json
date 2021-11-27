@@ -1,6 +1,6 @@
 {
   "name": "codeceptjs-video-helper",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CodeceptJS Helper for multi sesssion video recording",
   "main": "index.js",
   "scripts": {
@@ -21,6 +21,6 @@
   },
   "homepage": "https://github.com/MLaszczewski/codeceptjs-video-helper",
   "dependencies": {
-    "@codeceptjs/helper": "^1.0.2"    
+    "@codeceptjs/helper": "^1.0.2"
   }
 }
