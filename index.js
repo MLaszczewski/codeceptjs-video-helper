@@ -2,7 +2,7 @@ const path = require('path')
 const fs = require('fs')
 const Helper = require('@codeceptjs/helper')
 
-class VideoHelper extends Helper {  
+class VideoHelper extends Helper {
   _init() {
     this.events = []
     this.start = Date.now()
@@ -10,7 +10,7 @@ class VideoHelper extends Helper {
 
   async _finishTest() {
     const pw = this.helpers.Playwright
-    //console.log("PW", pw)    
+    //console.log("PW", pw)
     let videoDir = pw.config?.emulate?.recordVideo?.dir
     if(!videoDir) return
     const mainVideo = pw.page.video()
@@ -27,7 +27,9 @@ class VideoHelper extends Helper {
     //console.log("EVENTS:\n" + scenarioJson)
 
     await fs.promises.writeFile(path.resolve(videoDir, 'scenario.json'), scenarioJson)
-    const videos = [mainVideoPath].concat(this.events.map(ev => ev.video).filter(x => !!x))
+    const videos = Array.from(new Set(
+      [mainVideoPath].concat(this.events.map(ev => ev.video).filter(x => !!x))
+    ))
     const producers = videos.map(video =>
       `  <producer id="${path.basename(video).split('.')[0]}">\n` +
       `    <property name="resource">${video}</property>\n` +
@@ -49,7 +51,7 @@ class VideoHelper extends Helper {
       entries.push(`<entry producer="${currentProducer.id}" ` +
         `in="${((lastProducerChange - currentProducer.start) / timePerFrame) | 0}" ` +
         `out="${((at - currentProducer.start) / timePerFrame) | 0}"></entry>`)
-      
+
       currentProducer = to
       lastProducerChange = at
     }
@@ -72,8 +74,8 @@ class VideoHelper extends Helper {
     entries.push(`<entry producer="${currentProducer.id}" ` +
       `in="${((lastProducerChange - currentProducer.start) / timePerFrame) | 0}" ` +
       `out="${((this.events.slice(-1)[0].at - currentProducer.start) / timePerFrame) | 0}"></entry>`)
-  
-    
+
+
     const multitrack =
       `  <tractor>\n` +
       `    <multitrack>\n` +
@@ -89,7 +91,7 @@ class VideoHelper extends Helper {
   }
 
   async videoWait(n) {
-     const pw = this.helpers.Playwright    
+     const pw = this.helpers.Playwright
     if(pw.config?.emulate?.recordVideo) await pw.wait(n)
   }
 
@@ -103,7 +105,7 @@ class VideoHelper extends Helper {
     let savedSessionName
     session.start = async (sessionName, config) => {
       //console.log("SESSION START", sessionName)
-      savedSessionName = sessionName    
+      savedSessionName = sessionName
       const emulate = pw.config?.emulate
       const recordVideo = emulate?.recordVideo
       const context = await pwSessionStart.call(session, sessionName, {
@@ -112,7 +114,7 @@ class VideoHelper extends Helper {
         ...config
       })
       const page = context._pages.values().next()?.value
-      const video = page?.video()    
+      const video = page?.video()
       this.events.push({ type: 'startSession', session: sessionName, at: Date.now(), video })
       return context
     }
@@ -142,14 +144,18 @@ class VideoHelper extends Helper {
     this.currentTest = test.title
     this.events.push({ type: 'enterTest', test: test.title, at: Date.now() })
   }
-  _after(test) {  
+  _after(test) {
     this.events.push({ type: 'leaveTest', test: this.currentTest, at: Date.now() })
     this.currentTest = null
   }
-  _beforeStep(step) {  
+  _beforeStep(step) {
+    const pw = this.helpers.Playwright
+    const page = pw.browserContext._pages.values().next()?.value
+    const video = page?.video()
     this.events.push({
       type: 'enterStep', prefix: step.prefix, actor: step.actor, args: step.args, suffix: step.suffix,
-      at: Date.now()
+      at: Date.now(),
+      video
     })
   }
   _afterStep(step) {
@@ -162,7 +168,7 @@ class VideoHelper extends Helper {
       at: Date.now()
     })
   }
-  _passed(test) {    
+  _passed(test) {
     this.events.push({ type: 'testPassed', test: test.title, at: Date.now() })
   }
   _failed(test) {
