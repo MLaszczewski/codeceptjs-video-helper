@@ -6,6 +6,7 @@ class VideoHelper extends Helper {
   _init() {
     this.events = []
     this.start = Date.now()
+    this.testBegin = null
   }
 
   async _finishTest() {
@@ -13,7 +14,7 @@ class VideoHelper extends Helper {
     //console.log("PW", pw)
     let videoDir = pw.config?.emulate?.recordVideo?.dir
     if(!videoDir) return
-    const mainVideo = pw.page.video()
+    const mainVideo = pw.page?.video()
     let mainVideoPath = mainVideo && await mainVideo.path()
     if(mainVideoPath) mainVideoPath = path.relative(videoDir, mainVideoPath)
     this.start = this.events[0].at
@@ -23,12 +24,13 @@ class VideoHelper extends Helper {
       }
       event.at -= this.start
     }
+    this.events.unshift({ type:'init', video: mainVideoPath })
     const scenarioJson = this.events.map(x => JSON.stringify(x)).join('\n')
     //console.log("EVENTS:\n" + scenarioJson)
 
     await fs.promises.writeFile(path.resolve(videoDir, 'scenario.json'), scenarioJson)
     const videos = Array.from(new Set(
-      [mainVideoPath].concat(this.events.map(ev => ev.video).filter(x => !!x))
+      (mainVideoPath && [mainVideoPath]).concat(this.events.map(ev => ev.video).filter(x => !!x))
     ))
     const producers = videos.map(video =>
       `  <producer id="${path.basename(video).split('.')[0]}">\n` +
@@ -142,20 +144,21 @@ class VideoHelper extends Helper {
   }
   _before(test) {
     this.currentTest = test.title
-    this.events.push({ type: 'enterTest', test: test.title, at: Date.now() })
+
+    this.events.push(this.testBegin = { type: 'enterTest', test: test.title, at: Date.now() })
   }
   _after(test) {
+    const pw = this.helpers.Playwright
+    const page = pw.browserContext._pages.values().next()?.value
+    const video = page?.video()
+    this.testBegin.video = video
     this.events.push({ type: 'leaveTest', test: this.currentTest, at: Date.now() })
     this.currentTest = null
   }
   _beforeStep(step) {
-    const pw = this.helpers.Playwright
-    const page = pw.browserContext._pages.values().next()?.value
-    const video = page?.video()
     this.events.push({
       type: 'enterStep', prefix: step.prefix, actor: step.actor, args: step.args, suffix: step.suffix,
-      at: Date.now(),
-      video
+      at: Date.now()
     })
   }
   _afterStep(step) {
