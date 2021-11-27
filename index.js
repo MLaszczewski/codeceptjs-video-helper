@@ -14,23 +14,28 @@ class VideoHelper extends Helper {
     //console.log("PW", pw)
     let videoDir = pw.config?.emulate?.recordVideo?.dir
     if(!videoDir) return
-    const mainVideo = pw.page?.video()
-    let mainVideoPath = mainVideo && await mainVideo.path()
-    if(mainVideoPath) mainVideoPath = path.relative(videoDir, mainVideoPath)
-    this.start = this.events[0].at
-    for(const event of this.events) {
-      if(event.video) {
-        event.video = path.relative(videoDir, await event.video.path())
-      }
-      event.at -= this.start
-    }
-    this.events.unshift({ type:'init', video: mainVideoPath })
-    const scenarioJson = this.events.map(x => JSON.stringify(x)).join('\n')
-    //console.log("EVENTS:\n" + scenarioJson)
 
+    if(this.events.length) {
+      this.start = this.events[0].at
+      for (const event of this.events) {
+        if (event.video) {
+          event.video = path.relative(videoDir, await event.video.path())
+        }
+        event.at -= this.start
+      }
+    }
+    const scenarioJson = this.events.map(x => JSON.stringify(x)).join('\n')
     await fs.promises.writeFile(path.resolve(videoDir, 'scenario.json'), scenarioJson)
+    
+    const mainVideo = pw.page?.video()
+    if(!mainVideo) return
+    
+    /// TODO: rewrite mlt export for multiple tests support
+    let mainVideoPath = await mainVideo.path()
+    mainVideoPath = path.relative(videoDir, mainVideoPath)
+    
     const videos = Array.from(new Set(
-      (mainVideoPath && [mainVideoPath]).concat(this.events.map(ev => ev.video).filter(x => !!x))
+      [mainVideoPath].concat(this.events.map(ev => ev.video).filter(x => !!x))
     ))
     const producers = videos.map(video =>
       `  <producer id="${path.basename(video).split('.')[0]}">\n` +
